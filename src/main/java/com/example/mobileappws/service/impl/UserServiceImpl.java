@@ -7,9 +7,11 @@ import com.example.mobileappws.service.UserService;
 import com.example.mobileappws.shared.Utils;
 import com.example.mobileappws.shared.dto.UserDto;
 import com.example.mobileappws.ui.model.response.ErrorMessages;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
  public class UserServiceImpl implements UserService {
@@ -101,6 +104,25 @@ import java.util.ArrayList;
         userRepository.delete(userEntity);
     }
 
+    @Override
+    public List<UserDto> getUsers(int page, int limit) {
+        List<UserDto> returnValue = new ArrayList<>();
+
+        if(page>0) page = page -1;
+
+        Pageable pageableRequest  =  PageRequest.of( page , limit);
+
+        Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
+        List<UserEntity> users = usersPage.getContent();
+
+        for(UserEntity userEntity : users){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(userEntity, userDto);
+            returnValue.add(userDto);
+        }
+        return returnValue;
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -109,6 +131,8 @@ import java.util.ArrayList;
        if(userEntity == null) throw new UsernameNotFoundException(email);
        return  new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
     }
+
+
 }
 
 
