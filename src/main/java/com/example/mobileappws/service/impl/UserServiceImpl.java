@@ -1,10 +1,13 @@
 package com.example.mobileappws.service.impl;
 
 import com.example.mobileappws.UserRepository;
+import com.example.mobileappws.exceptions.UserServiceException;
 import com.example.mobileappws.io.entity.UserEntity;
 import com.example.mobileappws.service.UserService;
 import com.example.mobileappws.shared.Utils;
 import com.example.mobileappws.shared.dto.UserDto;
+import com.example.mobileappws.ui.model.response.ErrorMessages;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
@@ -65,9 +68,37 @@ import java.util.ArrayList;
         UserDto returnValue = new UserDto();
         UserEntity userEntity = userRepository.findByUserId(userId);
 
-        if(userEntity == null) throw new UsernameNotFoundException(userId);
+        if(userEntity == null) throw new UsernameNotFoundException("User with ID:" + userId + "not found");
         BeanUtils.copyProperties(userEntity, returnValue);
         return returnValue;
+    }
+
+    @Override
+    public UserDto updateUser(String userId, UserDto user) {
+        UserDto returnValue = new UserDto();
+
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null)
+            throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+
+        userEntity.setFirstName(user.getFirstName());
+        userEntity.setLastName(user.getLastName());
+
+        UserEntity updatedUserDetails = userRepository.save(userEntity);
+//        returnValue = new ModelMapper().map(updatedUserDetails, UserDto.class);
+        BeanUtils.copyProperties(updatedUserDetails, returnValue);
+        return returnValue;
+    }
+
+    @Override
+    public void deleteUser(String userId) {
+          UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null)
+            throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+
+        userRepository.delete(userEntity);
     }
 
 

@@ -6,7 +6,11 @@ import com.example.mobileappws.service.UserService;
 import com.example.mobileappws.shared.dto.UserDto;
 import com.example.mobileappws.ui.model.request.UserDetailsRequestModel;
 import com.example.mobileappws.ui.model.response.ErrorMessages;
+import com.example.mobileappws.ui.model.response.OperationStatusModel;
 import com.example.mobileappws.ui.model.response.UserRest;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -53,15 +57,30 @@ public class UserController {
             consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }, produces = {
             MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
     )
-    public String updateUser(){
-        return "update user was colled";
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+    })
+    public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
+        UserRest returnValue = new UserRest();
+
+        UserDto userDto = new UserDto();
+        userDto = new ModelMapper().map(userDetails, UserDto.class);
+
+        UserDto updateUser = userService.updateUser(id, userDto);
+        returnValue = new ModelMapper().map(updateUser, UserRest.class);
+
+        return returnValue;
     }
 
-    @DeleteMapping(
+
+    @DeleteMapping(path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
     )
-    public String deleteUser(){
-        return "delete user was colled";
+    public OperationStatusModel deleteUser(@PathVariable String id){
+        OperationStatusModel returnValue = new OperationStatusModel();
+        returnValue.setOperationName(RequestOperationName.DELETE.name());
+        returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+        return returnValue;
     }
 
 
